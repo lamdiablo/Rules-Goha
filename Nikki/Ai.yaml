@@ -74,7 +74,7 @@ payload:
   - IP-CIDR6,2607:6bc0::/48,no-resolve
 
   # =========================================
-  # GitHub Copilot & Microsoft
+  # GitHub Copilot & Microsoft AI
   # =========================================
   - DOMAIN,api.githubcopilot.com
   - DOMAIN,copilot-proxy.githubusercontent.com
@@ -98,6 +98,9 @@ payload:
   - DOMAIN-SUFFIX,devin.ai
   - DOMAIN-SUFFIX,trae.ai
   - DOMAIN,trae-api-sg.mchost.guru
+  - DOMAIN-SUFFIX,kiro.dev
+  - DOMAIN-SUFFIX,v0.dev
+  - DOMAIN-SUFFIX,sdk.vercel.ai
 
   # =========================================
   # Perplexity AI
@@ -114,64 +117,92 @@ payload:
   - DOMAIN,chat.mistral.ai
   - DOMAIN,console.mistral.ai
   - DOMAIN,imagine.meta.com
-  - DOMAIN,api.x.ai
   - DOMAIN-SUFFIX,mistral.ai
   - DOMAIN-SUFFIX,meta.ai
-  - DOMAIN-SUFFIX,x.ai
+  # xAI / Grok（精确匹配，避免 DOMAIN-SUFFIX,x.ai 误伤）
+  - DOMAIN,x.ai
+  - DOMAIN,api.x.ai
+  - DOMAIN,console.x.ai
+  - DOMAIN,accounts.x.ai
   - DOMAIN-SUFFIX,grok.com
-  - DOMAIN-SUFFIX,grok.x.com
   - DOMAIN-SUFFIX,cohere.com
   - DOMAIN-SUFFIX,cohere.ai
-  - DOMAIN-SUFFIX,huggingface.co
-  - DOMAIN-SUFFIX,hf.space
-  - DOMAIN-SUFFIX,hf.co
 
   # =========================================
-  # AI Aggregators & Workflows
+  # [已移除] HuggingFace
+  # 由 Nikki 主配置中 huggingface_domain → GlobalMedia 处理
+  # 模型下载动辄数 GB，走 GlobalMedia 大带宽节点更合理
+  # 不要放在此文件中，否则会被 ai_domain → AI 截取
+  # =========================================
+
+  # =========================================
+  # 图像 / 视频 / 音频 AI
+  # =========================================
+  - DOMAIN-SUFFIX,midjourney.com
+  - DOMAIN-SUFFIX,stability.ai
+  - DOMAIN-SUFFIX,runwayml.com
+  - DOMAIN-SUFFIX,runway.com
+  - DOMAIN-SUFFIX,ideogram.ai
+  - DOMAIN-SUFFIX,clipdrop.co
+  - DOMAIN-SUFFIX,elevenlabs.com
+  - DOMAIN-SUFFIX,elevenlabs.io
+  - DOMAIN-SUFFIX,suno.com
+  - DOMAIN-SUFFIX,udio.com
+  - DOMAIN-SUFFIX,lovart.ai
+  - DOMAIN-SUFFIX,openart.ai
+
+  # =========================================
+  # AI 推理 / 开发平台
+  # =========================================
+  - DOMAIN-SUFFIX,together.ai
+  - DOMAIN-SUFFIX,replicate.com
+  - DOMAIN-SUFFIX,fireworks.ai
+  - DOMAIN-SUFFIX,groq.com
+  - DOMAIN-SUFFIX,cerebras.ai
+  - DOMAIN-SUFFIX,openrouter.ai
+  - DOMAIN-SUFFIX,chutes.ai
+
+  # =========================================
+  # AI 聚合 / 工作流
   # =========================================
   - DOMAIN-SUFFIX,poe.com
   - DOMAIN-SUFFIX,poecdn.net
-  - DOMAIN-SUFFIX,coze.com
   - DOMAIN-SUFFIX,dify.ai
   - DOMAIN-SUFFIX,comfy.org
   - DOMAIN-SUFFIX,comfyci.org
   - DOMAIN-SUFFIX,comfyregistry.org
-  - DOMAIN-SUFFIX,openrouter.ai
   - DOMAIN-SUFFIX,clawhub.ai
   - DOMAIN-SUFFIX,openclaw.ai
-  - DOMAIN-SUFFIX,clipdrop.co
-  - DOMAIN-SUFFIX,elevenlabs.com
-  - DOMAIN-SUFFIX,elevenlabs.io
   - DOMAIN-SUFFIX,manus.im
   - DOMAIN-SUFFIX,manuscdn.com
 
   # =========================================
-  # JetBrains AI & Others
+  # JetBrains AI & 其他
   # =========================================
   - DOMAIN-SUFFIX,grazie.ai
   - DOMAIN-SUFFIX,grazie.aws.intellij.net
   - DOMAIN-SUFFIX,jetbrains.ai
   - DOMAIN-SUFFIX,gateway.ai.cloudflare.com
   - DOMAIN-SUFFIX,jasper.ai
-  - DOMAIN-SUFFIX,chutes.ai
   - DOMAIN-SUFFIX,diabrowser.com
   - DOMAIN-SUFFIX,diabrowser.engineering
   - DOMAIN-SUFFIX,h2o.ai
-  - DOMAIN-SUFFIX,kiro.dev
-  - DOMAIN-SUFFIX,lovart.ai
-  - DOMAIN-SUFFIX,openart.ai
   - DOMAIN-SUFFIX,spicywriter.com
-  - DOMAIN-SUFFIX,cerebras.ai
   - DOMAIN-SUFFIX,oystermercury.top
   - DOMAIN-SUFFIX,youmind.ai
   - DOMAIN-SUFFIX,youmind.com
   - DOMAIN-SUFFIX,youmind.site
   - DOMAIN-SUFFIX,duck.ai
-  - DOMAIN-SUFFIX,groq.com
-  - DOMAIN-SUFFIX,marscode.com
-  - DOMAIN-SUFFIX,cici.com
-  - DOMAIN-SUFFIX,ciciai.com
-  - DOMAIN-SUFFIX,ciciaicdn.com
   - DOMAIN-SUFFIX,dola.com
   - DOMAIN-SUFFIX,lpsnmedia.net
   - DOMAIN-SUFFIX,liveperson.net
+
+  # =========================================
+  # [已移除] 字节系海外 AI（国内可直连，走代理反而更慢）
+  # 如果你在海外或确实需要代理访问，取消下方注释即可
+  # =========================================
+  # - DOMAIN-SUFFIX,coze.com
+  # - DOMAIN-SUFFIX,cici.com
+  # - DOMAIN-SUFFIX,ciciai.com
+  # - DOMAIN-SUFFIX,ciciaicdn.com
+  # - DOMAIN-SUFFIX,marscode.com
