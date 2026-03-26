@@ -1,0 +1,24 @@
+#!name=X 网页版去广告
+#!desc=清理 X / x.com 网页版时间线与推文详情中的 Promoted 广告；附带拦截 promoted_content 上报。请将 script-path 替换为你自己的 JS 原始链接。
+#!author=ChatGPT
+#!homepage=https://x.com
+#!icon=https://abs.twimg.com/favicons/twitter.3.ico
+
+[Rule]
+DOMAIN,x.com,DIRECT
+DOMAIN-SUFFIX,twimg.com,DIRECT
+
+[Script]
+# 首页时间线广告
+http-response ^https?:\/\/x\.com\/i\/api\/graphql\/[^\/]+\/HomeTimeline(?:\?.*)?$ script-path=https://your-raw-url/x-ads-cleaner.js, requires-body=true, timeout=20, tag=X HomeTimeline Remove Ads, enable=true
+# 推文详情 / 展开楼中楼广告
+http-response ^https?:\/\/x\.com\/i\/api\/graphql\/[^\/]+\/TweetDetail(?:\?.*)?$ script-path=https://your-raw-url/x-ads-cleaner.js, requires-body=true, timeout=20, tag=X TweetDetail Remove Ads, enable=true
+# 探索 / 搜索侧栏中可能夹带的推广模块（保守处理）
+http-response ^https?:\/\/x\.com\/i\/api\/graphql\/[^\/]+\/(SearchTimeline|SearchLatestTimeline|ExploreSidebar)(?:\?.*)?$ script-path=https://your-raw-url/x-ads-cleaner.js, requires-body=true, timeout=20, tag=X Search Explore Remove Ads, enable=true
+
+[Rewrite]
+# 阻止广告曝光 / 点击上报
+^https?:\/\/x\.com\/i\/api\/1\.1\/promoted_content\/log\.json url reject-dict
+
+[MITM]
+hostname = x.com
