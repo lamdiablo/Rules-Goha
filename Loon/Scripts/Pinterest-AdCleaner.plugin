@@ -1,0 +1,14 @@
+#!name=Pinterest 去广告
+#!desc=移除 Pinterest iOS 首页商品插入、详情页相似商品/Shop the Pin 广告，并禁用部分广告配置请求
+#!author=ChatGPT
+
+[rewrite]
+^https?:\/\/api\.pinterest\.com\/v3\/thirdpartyad\/config\/?.* - reject-dict
+^https?:\/\/api\.pinterest\.com\/v3\/premiere_ad\/videos\/?.* - reject-dict
+
+[script]
+http-request ^https?:\/\/api\.pinterest\.com\/v3\/(?:feeds\/home\/|pins\/[^\/]+\/related\/modules\/|visual_search\/stela\/pins\/[^\/]+\/module\/) script-path=https://raw.githubusercontent.com/lamdiablo/Rules-Goha/refs/heads/main/Loon/Scripts/pinterest-ads-cleaner.js,timeout=10,tag=PinterestAdReq,enable=true
+http-response ^https?:\/\/api\.pinterest\.com\/v3\/(?:feeds\/home\/|pins\/[^\/]+\/related\/modules\/|visual_search\/stela\/pins\/[^\/]+\/module\/) script-path=https://raw.githubusercontent.com/lamdiablo/Rules-Goha/refs/heads/main/Loon/Scripts/pinterest-ads-cleaner.js,requires-body=true,timeout=10,tag=PinterestAdResp,enable=true
+
+[mitm]
+hostname = api.pinterest.com
