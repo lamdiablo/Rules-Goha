@@ -1,0 +1,13 @@
+#!name=抖音网页去广告
+#!desc=基于 www.douyin.com 抓包样本清理信息流广告，并抑制部分广告上报/活动弹层
+#!author=OpenAI
+
+[rewrite]
+^https?:\/\/www-hj\.douyin\.com\/aweme\/v1\/web\/brand\/ad\/impression\/ - reject-dict
+
+[script]
+http-response ^https?:\/\/www\.douyin\.com\/aweme\/v1\/web\/tab\/feed\/ script-path=https://raw.githubusercontent.com/lamdiablo/Rules-Goha/refs/heads/main/Loon/Scripts/douyin-web-ads-cleaner.js,requires-body=true,timeout=10,tag=DouyinWebFeedAdCleaner,enable=true
+http-response ^https?:\/\/www\.douyin\.com\/aweme\/v1\/web\/activity\/pull\/carnival\/ script-path=https://raw.githubusercontent.com/lamdiablo/Rules-Goha/refs/heads/main/Loon/Scripts/douyin-web-ads-cleaner.js,requires-body=true,timeout=10,tag=DouyinWebPopupCleaner,enable=true
+
+[mitm]
+hostname = %APPEND% www.douyin.com, www-hj.douyin.com
