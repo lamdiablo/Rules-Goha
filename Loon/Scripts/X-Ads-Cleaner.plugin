@@ -4,10 +4,6 @@
 #!homepage=https://x.com
 #!icon=https://abs.twimg.com/favicons/twitter.3.ico
 
-[Rule]
-DOMAIN,x.com,DIRECT
-DOMAIN-SUFFIX,twimg.com,DIRECT
-
 [Script]
 # 首页时间线广告
 http-response ^https?:\/\/x\.com\/i\/api\/graphql\/[^\/]+\/HomeTimeline(?:\?.*)?$ script-path=https://raw.githubusercontent.com/lamdiablo/Rules-Goha/refs/heads/main/Loon/Scripts/x-ads-cleaner.js, requires-body=true, timeout=20, tag=X HomeTimeline Remove Ads, enable=true
