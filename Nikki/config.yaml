@@ -1,0 +1,278 @@
+# ============================================================
+# Nikki (Mihomo) 主配置
+# 策略：国内双栈（IPv4 + IPv6），国外仅 IPv4
+#
+# 适用场景：OpenWrt + Nikki 插件
+# 最后更新：2026-04
+# ============================================================
+
+# ---------- 基础设置 ----------
+mixed-port: 7890          # HTTP/SOCKS5 混合端口
+allow-lan: true           # 允许局域网设备使用代理
+bind-address: '*'
+mode: rule
+log-level: info
+
+# 必须为 true：允许内核处理 IPv6 流量（本地/国内 IPv6 才能正常工作）
+ipv6: true
+
+# ---------- 透明代理（TProxy，OpenWrt 常用）----------
+tproxy-port: 7893
+unified-delay: true
+tcp-concurrent: true
+
+# ---------- 外部控制面板 ----------
+external-controller: 0.0.0.0:9090
+# secret: "your_secret_here"   # 建议设置访问密码
+
+# ============================================================
+# DNS 配置
+# 目标：
+#   - 国内域名 → 国内 DNS（可返回 IPv4 + IPv6 AAAA）
+#   - 国外域名 → 国外 DNS（仍可解析，但出口策略控制不走 IPv6）
+# ============================================================
+dns:
+  enable: true
+  ipv6: true              # 允许 DNS 返回 AAAA 记录（国内 IPv6 直连依赖此项）
+  listen: 0.0.0.0:1053
+
+  # fake-ip 模式：域名流量不需要实际 DNS 解析即可被规则匹配
+  # 推荐使用，可避免 DNS 泄漏，且兼容性好
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.0/15
+
+  # 以下域名不走 fake-ip，返回真实 IP（内网服务、本地域名等）
+  fake-ip-filter:
+    - '*.lan'
+    - '*.local'
+    - '*.localdomain'
+    - '*.internal'
+    - '*.home.arpa'
+    - 'localhost'
+    - 'localhost.ptlogin2.qq.com'
+    - '+.stun.*.*'
+    - '+.stun.*.*.*'
+    - '+.stun.*.*.*.*'
+
+  # 默认 DNS（用于解析 DoH/DoT 服务器的域名，必须是纯 IP）
+  default-nameserver:
+    - 114.114.114.114
+    - 223.5.5.5
+    - "[2400:3200::1]"       # 阿里 IPv6 DNS（可选）
+
+  # 国内主用 DNS（支持 AAAA 查询）
+  nameserver:
+    - https://doh.pub/dns-query          # 腾讯 DoH
+    - https://dns.alidns.com/dns-query   # 阿里 DoH
+    - 114.114.114.114
+    - 223.5.5.5
+
+  # 国外 fallback DNS（当 fallback-filter 判定为非国内时使用）
+  fallback:
+    - https://8.8.8.8/dns-query
+    - https://1.1.1.1/dns-query
+    - tls://8.8.8.8:853
+    - tls://1.1.1.1:853
+
+  # fallback 过滤器：GeoIP 不是 CN 的域名走 fallback DNS
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    ipcidr:
+      - 240.0.0.0/4      # 保留地址，视为非国内
+      - 0.0.0.0/32
+
+  # 指定域名使用特定 DNS（可按需增补）
+  nameserver-policy:
+    "geosite:cn,private":
+      - https://doh.pub/dns-query
+      - https://dns.alidns.com/dns-query
+    "geosite:geolocation-!cn":
+      - https://8.8.8.8/dns-query
+      - https://1.1.1.1/dns-query
+
+# ============================================================
+# 代理节点（proxies）
+# 请填入你的实际节点，以下为格式示例
+# ============================================================
+proxies:
+  # - name: "HK-01"
+  #   type: vmess
+  #   server: your.proxy.server
+  #   port: 443
+  #   uuid: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+  #   alterId: 0
+  #   cipher: auto
+  #   tls: true
+
+# ============================================================
+# 代理组（proxy-groups）
+#
+# ⚠️ 重点：所有"国外"代理组均须添加 ipv6: false
+#    作用：禁止 Nikki 客户端通过 IPv6 连接代理服务器，
+#         确保客户端 → 代理节点 这段链路只走 IPv4
+# ============================================================
+proxy-groups:
+
+  # ---------- 手动选择（总出口）----------
+  - name: "Global"
+    type: select
+    ipv6: false           # ← 关键：禁用此组的 IPv6 出口
+    proxies:
+      - "自动选择"
+      - "DIRECT"
+      # - "HK-01"         # 取消注释并填入你的节点名
+
+  # ---------- 自动选择（延迟测速）----------
+  - name: "自动选择"
+    type: url-test
+    ipv6: false           # ← 关键
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 50
+    proxies:
+      []                  # 填入你的节点名列表
+      # - "HK-01"
+
+  # ---------- 流媒体（Netflix / YouTube Premium 等）----------
+  - name: "GlobalMedia"
+    type: select
+    ipv6: false           # ← 关键：流媒体也只走 IPv4
+    proxies:
+      - "Global"
+      - "DIRECT"
+
+  # ---------- AI 服务（OpenAI / Claude / Gemini 等）----------
+  - name: "AI"
+    type: select
+    ipv6: false           # ← 关键
+    proxies:
+      - "Global"
+      - "DIRECT"
+
+  # ---------- 国内直连（允许双栈，不限 IPv4/IPv6）----------
+  - name: "DOMESTIC"
+    type: select
+    # 不设 ipv6: false → 允许 IPv4 + IPv6 双栈直连
+    proxies:
+      - "DIRECT"
+
+  # ---------- 兜底规则 ----------
+  - name: "FallBack"
+    type: select
+    ipv6: false           # ← 关键：兜底也优先走 IPv4
+    proxies:
+      - "Global"
+      - "DIRECT"
+
+# ============================================================
+# 规则集（rule-providers）
+# ============================================================
+rule-providers:
+
+  # AI 域名规则集（本仓库维护）
+  ai_domain:
+    type: http
+    behavior: domain
+    format: yaml
+    url: "https://raw.githubusercontent.com/lamdiablo/Rules-Goha/main/Nikki/Ai.yaml"
+    path: "./ruleset/ai_domain.yaml"
+    interval: 86400
+
+  # 以下为常用公共规则集示例（可按需启用）
+
+  # reject_domain:
+  #   type: http
+  #   behavior: domain
+  #   format: yaml
+  #   url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/reject.txt"
+  #   path: "./ruleset/reject_domain.yaml"
+  #   interval: 86400
+
+  # cn_domain:
+  #   type: http
+  #   behavior: domain
+  #   format: yaml
+  #   url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/direct.txt"
+  #   path: "./ruleset/cn_domain.yaml"
+  #   interval: 86400
+
+  # global_domain:
+  #   type: http
+  #   behavior: domain
+  #   format: yaml
+  #   url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/proxy.txt"
+  #   path: "./ruleset/global_domain.yaml"
+  #   interval: 86400
+
+# ============================================================
+# 分流规则（rules）
+#
+# 重要原则（顺序从上到下匹配，先匹配先生效）：
+#   1. 本地/私有地址 → DIRECT
+#   2. 私有 IPv6      → DIRECT（保障内网 IPv6 通信）
+#   3. 国内运营商 IPv6 → DIRECT（国内双栈直连）
+#   4. 海外 IPv6（2000::/3）→ REJECT（禁止直连海外 IPv6）
+#      ↑ 以上 4 条须在一般域名/IP 规则之前
+#   5. 域名分流（AI / 国内 / 国外）
+#   6. GeoSite / GeoIP 规则
+#   7. 兜底 → FallBack
+# ============================================================
+rules:
+
+  # ====== 第一组：本地 / 私有 IPv4 → 直连 ======
+  - DOMAIN-SUFFIX,local,DIRECT
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
+  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+  - IP-CIDR,169.254.0.0/16,DIRECT,no-resolve
+  - IP-CIDR,224.0.0.0/4,DIRECT,no-resolve
+
+  # ====== 第二组：私有 IPv6 → 直连（保障内网 IPv6 正常工作）======
+  # 环回地址
+  - IP-CIDR6,::1/128,DIRECT,no-resolve
+  # 唯一本地地址（fc00::/7 = fc00::/8 + fd00::/8）
+  - IP-CIDR6,fc00::/7,DIRECT,no-resolve
+  # 链路本地地址
+  - IP-CIDR6,fe80::/10,DIRECT,no-resolve
+  # NAT64（IPv4 映射）
+  - IP-CIDR6,64:ff9b::/96,DIRECT,no-resolve
+  - IP-CIDR6,64:ff9b:1::/48,DIRECT,no-resolve
+  # 文档/测试用地址
+  - IP-CIDR6,2001:db8::/32,DIRECT,no-resolve
+
+  # ====== 第三组：国内运营商 IPv6 → 直连（国内双栈）======
+  # 中国电信
+  - IP-CIDR6,240e::/18,DIRECT,no-resolve
+  # 中国移动
+  - IP-CIDR6,2408::/18,DIRECT,no-resolve
+  # 中国联通
+  - IP-CIDR6,2409::/18,DIRECT,no-resolve
+  # 中国广电（CRTC）
+  - IP-CIDR6,2400:da00::/32,DIRECT,no-resolve
+  # 教育网 CERNET
+  - IP-CIDR6,2001:da8::/32,DIRECT,no-resolve
+
+  # ====== 第四组：海外 IPv6 → 拒绝（禁止直连海外 IPv6）======
+  # 2000::/3 覆盖所有全球单播 IPv6（除上方已放行的国内段外均为海外）
+  # no-resolve：仅对目标是 IPv6 地址的直连流量生效，不影响域名代理
+  - IP-CIDR6,2000::/3,REJECT,no-resolve
+
+  # ====== 第五组：域名分流 ======
+
+  # AI 服务 → AI 代理组
+  - RULE-SET,ai_domain,AI
+
+  # （按需启用）其他域名规则集
+  # - RULE-SET,reject_domain,REJECT
+  # - RULE-SET,cn_domain,DOMESTIC
+  # - RULE-SET,global_domain,Global
+
+  # ====== 第六组：GeoSite / GeoIP ======
+  - GEOSITE,private,DIRECT
+  - GEOSITE,cn,DOMESTIC
+  - GEOIP,CN,DOMESTIC,no-resolve
+
+  # ====== 第七组：兜底 ======
+  - MATCH,FallBack
