@@ -177,7 +177,7 @@ curl -6 -s --max-time 5 https://ip.sb
 
 **方法 C：DNS 泄漏检测**
 
-访问 `https://dnsleaktest.com`，点击「Extended Test」，确认 DNS 服务器不包含运营商 DNS（如 不应出现 `202.96.x.x` 等电信/联通 DNS）。
+访问 `https://dnsleaktest.com`，点击「Extended Test」，确认 DNS 服务器不包含运营商 DNS（如不应出现 `202.96.x.x` 等电信/联通 DNS）。
 
 ### 3. 验证代理流量走 IPv4
 
@@ -284,7 +284,7 @@ tun:
 
 **原因**：PPPoE 会在以太网帧上添加 8 字节头，使 MTU 从 1500 降到 1492。如果没有正确设置 MSS Clamp，TCP 大包会被分片或丢弃。
 
-**解决方法**：在 OpenWrt 网络 → 接口 → PPPoE 接口 → 高级设置中，将 MSS 设置为 1452（IPv4）或 1432（IPv6，额外减去 20 字节 IPv6 头）。
+**解决方法**：在 OpenWrt 网络 → 接口 → PPPoE 接口 → 高级设置中，将 MSS 设置为 1452（IPv4，计算方式：MTU 1492 - TCP/IP 头部 40 字节 = 1452）或 1432（IPv6，再减去 IPv6 额外头部 20 字节）。
 
 或通过命令行：
 
